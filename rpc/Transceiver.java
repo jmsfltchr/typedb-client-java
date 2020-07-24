@@ -19,9 +19,6 @@
 
 package grakn.client.rpc;
 
-import com.google.common.collect.AbstractIterator;
-import grabl.tracing.client.GrablTracingThreadStatic;
-import grabl.tracing.client.GrablTracingThreadStatic.ThreadTrace;
 import grakn.client.exception.GraknClientException;
 import grakn.protocol.session.SessionProto;
 import grakn.protocol.session.SessionProto.Transaction;
@@ -38,8 +35,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import static grabl.tracing.client.GrablTracingThreadStatic.traceOnThread;
 
 
 /**
@@ -92,17 +87,13 @@ public class Transceiver implements AutoCloseable {
     }
 
     public Transaction.Res sendAndReceive(Transaction.Req request) throws InterruptedException {
-        try (ThreadTrace trace = traceOnThread("sendAndReceive")) {
-            SingleResponseCollector collector = new SingleResponseCollector();
-            send(request, collector);
-            return collector.receive();
-        }
+        SingleResponseCollector collector = new SingleResponseCollector();
+        send(request, collector);
+        return collector.receive();
     }
 
     public void sendAndReceiveMultipleAsync(Transaction.Req request, MultiResponseCollector collector) {
-        try (ThreadTrace trace = GrablTracingThreadStatic.traceOnThread("sendAndReceiveMultipleAsync")) {
-            send(request, collector);
-        }
+        send(request, collector);
     }
 
     @Override

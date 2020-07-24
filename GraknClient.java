@@ -21,7 +21,6 @@ package grakn.client;
 
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.ImmutableList;
-import grabl.tracing.client.GrablTracingThreadStatic.ThreadTrace;
 import grakn.client.answer.Answer;
 import grakn.client.answer.AnswerGroup;
 import grakn.client.answer.ConceptList;
@@ -32,16 +31,16 @@ import grakn.client.answer.Explanation;
 import grakn.client.answer.Numeric;
 import grakn.client.answer.Void;
 import grakn.client.concept.Concept;
-import grakn.client.concept.ValueType;
-import grakn.client.concept.type.Role;
-import grakn.client.concept.Rule;
-import grakn.client.concept.SchemaConcept;
 import grakn.client.concept.ConceptId;
 import grakn.client.concept.Label;
+import grakn.client.concept.Rule;
+import grakn.client.concept.SchemaConcept;
+import grakn.client.concept.ValueType;
 import grakn.client.concept.thing.Attribute;
 import grakn.client.concept.type.AttributeType;
 import grakn.client.concept.type.EntityType;
 import grakn.client.concept.type.RelationType;
+import grakn.client.concept.type.Role;
 import grakn.client.exception.GraknClientException;
 import grakn.client.rpc.RequestBuilder;
 import grakn.client.rpc.ResponseReader;
@@ -83,8 +82,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
-
-import static grabl.tracing.client.GrablTracingThreadStatic.traceOnThread;
 
 /**
  * Entry-point which communicates with a running Grakn server using gRPC.
@@ -262,12 +259,10 @@ public class GraknClient implements AutoCloseable {
         }
 
         private Transaction(ManagedChannel channel, Session session, String sessionId, Type type) {
-            try (ThreadTrace trace = traceOnThread(type == Type.WRITE ? "tx.write" : "tx.read")) {
-                this.transceiver = Transceiver.create(SessionServiceGrpc.newStub(channel));
-                this.session = session;
-                this.type = type;
-                sendAndReceiveOrThrow(RequestBuilder.Transaction.open(sessionId, type));
-            }
+            this.transceiver = Transceiver.create(SessionServiceGrpc.newStub(channel));
+            this.session = session;
+            this.type = type;
+            sendAndReceiveOrThrow(RequestBuilder.Transaction.open(sessionId, type));
         }
 
         public Type type() {
@@ -283,78 +278,58 @@ public class GraknClient implements AutoCloseable {
         }
 
         public QueryFuture<List<ConceptMap>> execute(GraqlDefine query) {
-            try (ThreadTrace trace = traceOnThread("tx.execute.define")) {
-                return executeInternal(query, Options.DEFAULT);
-            }
+            return executeInternal(query, Options.DEFAULT);
         }
 
         public QueryFuture<List<ConceptMap>> execute(GraqlUndefine query) {
-            try (ThreadTrace trace = traceOnThread("tx.execute.undefine")) {
-                return executeInternal(query, Options.DEFAULT);
-            }
+            return executeInternal(query, Options.DEFAULT);
         }
 
         public QueryFuture<List<ConceptMap>> execute(GraqlInsert query, QueryOptions options) {
-            try (ThreadTrace trace = traceOnThread("tx.execute.insert")) {
-                return executeInternal(query, options);
-            }
+            return executeInternal(query, options);
         }
         public QueryFuture<List<ConceptMap>> execute(GraqlInsert query) {
             return execute(query, Options.DEFAULT);
         }
 
         public QueryFuture<List<Void>> execute(GraqlDelete query, QueryOptions options) {
-            try (ThreadTrace trace = traceOnThread("tx.execute.delete")) {
-                return executeInternal(query, options);
-            }
+            return executeInternal(query, options);
         }
         public QueryFuture<List<Void>> execute(GraqlDelete query) {
             return execute(query, Options.DEFAULT);
         }
 
         public QueryFuture<List<ConceptMap>> execute(GraqlGet query, QueryOptions options) {
-            try (ThreadTrace trace = traceOnThread("tx.execute.get")) {
-                return executeInternal(query, options);
-            }
+            return executeInternal(query, options);
         }
         public QueryFuture<List<ConceptMap>> execute(GraqlGet query) {
             return execute(query, Options.DEFAULT);
         }
 
         public QueryFuture<Stream<ConceptMap>> stream(GraqlDefine query) {
-            try (ThreadTrace trace = traceOnThread("tx.stream.define")) {
-                return streamInternal(query, Options.DEFAULT);
-            }
+            return streamInternal(query, Options.DEFAULT);
         }
 
         public QueryFuture<Stream<ConceptMap>> stream(GraqlUndefine query) {
-            try (ThreadTrace trace = traceOnThread("tx.stream.undefine")) {
-                return streamInternal(query, Options.DEFAULT);
-            }
+            return streamInternal(query, Options.DEFAULT);
         }
 
         public QueryFuture<Stream<ConceptMap>> stream(GraqlInsert query, QueryOptions options) {
-            try (ThreadTrace trace = traceOnThread("tx.stream.insert")) {
-                return streamInternal(query, options);
-            }
+            return streamInternal(query, options);
         }
         public QueryFuture<Stream<ConceptMap>> stream(GraqlInsert query) {
             return stream(query, Options.DEFAULT);
         }
 
         public QueryFuture<Stream<Void>> stream(GraqlDelete query, QueryOptions options) {
-            try (ThreadTrace trace = traceOnThread("tx.stream.delete")) {
-                return streamInternal(query, options);
-            }
+            return streamInternal(query, options);
         }
         public QueryFuture<Stream<Void>> stream(GraqlDelete query) {
             return stream(query, Options.DEFAULT);
         }
 
         public QueryFuture<Stream<ConceptMap>> stream(GraqlGet query, QueryOptions options) {
-            try (ThreadTrace trace = traceOnThread("tx.stream.get")) {
-                return streamInternal(query, options);
-            }
+            return streamInternal(query, options);
         }
         public QueryFuture<Stream<ConceptMap>> stream(GraqlGet query) {
             return stream(query, Options.DEFAULT);
@@ -367,9 +342,7 @@ public class GraknClient implements AutoCloseable {
         }
 
         public QueryFuture<List<Numeric>> execute(GraqlGet.Aggregate query, QueryOptions options) {
-            try (ThreadTrace trace = traceOnThread("tx.execute.get.aggregate")) {
-                return executeInternal(query, options);
-            }
+            return executeInternal(query, options);
         }
 
         public QueryFuture<Stream<Numeric>> stream(GraqlGet.Aggregate query) {
@@ -377,9 +350,7 @@ public class GraknClient implements AutoCloseable {
         }
 
         public QueryFuture<Stream<Numeric>> stream(GraqlGet.Aggregate query, QueryOptions options) {
-            try (ThreadTrace trace = traceOnThread("tx.stream.get.aggregate")) {
-                return streamInternal(query, options);
-            }
+            return streamInternal(query, options);
         }
 
         // Group Query
@@ -389,9 +360,7 @@ public class GraknClient implements AutoCloseable {
         }
 
         public QueryFuture<List<AnswerGroup<ConceptMap>>> execute(GraqlGet.Group query, QueryOptions options) {
-            try (ThreadTrace trace = traceOnThread("tx.execute.get.group")) {
-                return executeInternal(query, options);
-            }
+            return executeInternal(query, options);
         }
 
         public QueryFuture<Stream<AnswerGroup<ConceptMap>>> stream(GraqlGet.Group query) {
@@ -399,9 +368,7 @@ public class GraknClient implements AutoCloseable {
         }
 
         public QueryFuture<Stream<AnswerGroup<ConceptMap>>> stream(GraqlGet.Group query, QueryOptions options) {
-            try (ThreadTrace trace = traceOnThread("tx.stream.get.group")) {
-                return streamInternal(query, options);
-            }
+            return streamInternal(query, options);
         }
 
 
@@ -412,9 +379,7 @@ public class GraknClient implements AutoCloseable {
         }
 
         public QueryFuture<List<AnswerGroup<Numeric>>> execute(GraqlGet.Group.Aggregate query, QueryOptions options) {
-            try (ThreadTrace trace = traceOnThread("tx.execute.get.group.aggregate")) {
-                return executeInternal(query, options);
-            }
+            return executeInternal(query, options);
         }
 
 
@@ -423,59 +388,41 @@ public class GraknClient implements AutoCloseable {
         }
 
         public QueryFuture<Stream<AnswerGroup<Numeric>>> stream(GraqlGet.Group.Aggregate query, QueryOptions options) {
-            try (ThreadTrace trace = traceOnThread("tx.stream.get.group.aggregate")) {
-                return streamInternal(query, options);
-            }
+            return streamInternal(query, options);
         }
 
         // Compute Query
 
         public QueryFuture<List<Numeric>> execute(GraqlCompute.Statistics query) {
-            try (ThreadTrace trace = traceOnThread("tx.execute.compute.statistics")) {
-                return executeInternal(query);
-            }
+            return executeInternal(query);
         }
 
         public QueryFuture<Stream<Numeric>> stream(GraqlCompute.Statistics query) {
-            try (ThreadTrace trace = traceOnThread("tx.stream.compute.statistics")) {
-                return streamInternal(query);
-            }
+            return streamInternal(query);
         }
 
         public QueryFuture<List<ConceptList>> execute(GraqlCompute.Path query) {
-            try (ThreadTrace trace = traceOnThread("tx.execute.compute.path")) {
-                return executeInternal(query);
-            }
+            return executeInternal(query);
         }
 
         public QueryFuture<Stream<ConceptList>> stream(GraqlCompute.Path query) {
-            try (ThreadTrace trace = traceOnThread("tx.stream.compute.path")) {
-                return streamInternal(query);
-            }
+            return streamInternal(query);
         }
 
         public QueryFuture<List<ConceptSetMeasure>> execute(GraqlCompute.Centrality query) {
-            try (ThreadTrace trace = traceOnThread("tx.execute.compute.centrality")) {
-                return executeInternal(query);
-            }
+            return executeInternal(query);
         }
 
         public QueryFuture<Stream<ConceptSetMeasure>> stream(GraqlCompute.Centrality query) {
-            try (ThreadTrace trace = traceOnThread("tx.stream.compute.centrality")) {
-                return streamInternal(query);
-            }
+            return streamInternal(query);
         }
 
         public QueryFuture<List<ConceptSet>> execute(GraqlCompute.Cluster query) {
-            try (ThreadTrace trace = traceOnThread("tx.execute.compute.cluster")) {
-                return executeInternal(query);
-            }
+            return executeInternal(query);
         }
 
         public QueryFuture<Stream<ConceptSet>> stream(GraqlCompute.Cluster query) {
-            try (ThreadTrace trace = traceOnThread("tx.stream.compute.cluster")) {
-                return streamInternal(query);
-            }
+            return streamInternal(query);
         }
 
         // Generic queries
